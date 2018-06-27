@@ -25,13 +25,14 @@ SYS_SETSOCKOPT  equ 54
 section .data
         ;; HTTP response
         ;; https://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html
-	http_hello	db "HTTP/1.1 200 OK", 0xD, \
+	http_hello	db "HTTP/1.0 200 OK", 0xD,0xA, \
                         "Server: FB", 0xD,0xA, \
                         "Content-Length: 13", 0xD,0xA, \
-                        "Connection: close",0xD,0xA, \
+                        "Connection: close",0xD,0xA,\
                         "Content-Type: text/html",0xD,0xA,0xD,0xA, \
-                        "hello, world!",0xD,0xA
-
+                        "hello, world!"
+section .bss
+        file_buffer resb 4096
 section .text
 	global	_start
 
@@ -78,7 +79,7 @@ _start:
 	;; call	'listen' system call.
         ;; file descritor is already in
         ;; %rdi. %rsi is the backlog argument. 20 is fine.
-        mov     rsi, 0
+        mov     rsi, 10
 	mov     eax, SYS_LISTEN
         syscall
 
@@ -113,10 +114,13 @@ _write:
         ;; rdi now contains the client's
         ;; file descriptor.
 	;; read syscall
+
+        mov     rsi, file_buffer
 	mov     rax, SYS_READ
 	;; length of message
 	mov     rdx, 4096
 	syscall
+        add esp, 4
 
 
 	;; write syscall
@@ -125,7 +129,7 @@ _write:
 	;; message address
 	mov     rsi, http_hello
 	;; length of message
-	mov     rdx, 109
+	mov     rdx, 108
 	;; call write syscall
 	syscall
 
@@ -135,7 +139,7 @@ _write:
         mov     rax, 48
         mov     rsi, 0
         ;; call shutdown syscall (48)
-        syscall
+        ;; syscall
 
         mov     rax, 3
         ;; call close syscall (3)
