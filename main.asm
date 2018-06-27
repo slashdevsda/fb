@@ -17,7 +17,7 @@ SYS_BIND        equ 49
 SYS_LISTEN      equ 50
 SYS_ACCEPT      equ 43
 SYS_READ        equ 0
-
+SYS_SETSOCKOPT  equ 54
 
 
         socket_args dd AF_INET, SOCK_STREAM, 0
@@ -48,6 +48,19 @@ _start:
 	mov     rax, SYS_SOCKET     ;c.f. /usr/src/linux/net/socket.c
         syscall
 
+        ;;'setsockopt' syscall
+        mov     rdi, rax        ; socket filedescriptor
+        ;; building an integer
+        push 1
+        mov     rsi, 1
+        mov     rdx, 15
+
+	mov     r10, rsp	; pointer on int previously created
+        mov     r8, 4           ; sizeof integer
+	mov     eax, SYS_SETSOCKOPT
+        syscall
+
+
         ;; 'bind' syscall.
 	;; building the sockaddr_in struct, by pushing its
         ;; values on the top of the stack, which is pointed by %rsp
@@ -56,7 +69,6 @@ _start:
 	push    WORD 2		; AF_INET = 2 (unsigned short int)
 
         ;; preparing bind() arguments
-        mov     rdi, rax        ; socket filedescriptor
 	mov     rsi, rsp	; struct pointer on previous created
                                 ; structure
         mov     rdx, 16         ; struct length
@@ -73,7 +85,7 @@ _start:
 _accept_loop:
         ;; entering accept loop
 
-        
+
         ;; call 'accept' system call
         mov       rax, SYS_ACCEPT
         mov       rsi, 0          ; NULL, unused
@@ -96,7 +108,7 @@ _exit:
 _write:
         ;; first, read and discard any received data. This step
         ;; is needed because of HTTP design (query/response)
-        
+
         mov     rdi, rax
         ;; rdi now contains the client's
         ;; file descriptor.
@@ -106,7 +118,7 @@ _write:
 	mov     rdx, 4096
 	syscall
 
-        
+
 	;; write syscall
 	mov     rax, 1
 	;;mov	rdi, 1
@@ -119,7 +131,7 @@ _write:
 
         ;; shutdown socket
         ;; & cleanup code
-        
+
         mov     rax, 48
         mov     rsi, 0
         ;; call shutdown syscall (48)
