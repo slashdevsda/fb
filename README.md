@@ -29,3 +29,5 @@ You'll need _nasm_ and an x86_64 Linux
 build by running `make`
 
 execute by running `./exxx`
+
+it binds on port 4270 (0xae10)
